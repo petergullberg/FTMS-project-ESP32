@@ -1,4 +1,4 @@
-# SOLE F85 Bluetooth LE Technical Details
+# SOLE F85 Bluetooth LE Technical Details - work in progress
 - This original documentation came from swedishborgie
 The treadmill appears to use a fairly common integrated BLE to UART module. 
 The treadmill does not listen for connections while in low power mode, the display must be active in order to connect.
@@ -17,6 +17,7 @@ It advertises the following:
 
 - Read (Notify) - 49535343-1E4D-4BD9-BA61-23C647249616
 - Write - 49535343-8841-43F4-A8D4-ECBE34729BB3
+
 To perform serial communication you'll subscribe to notifications for the read characteristic to receive messages from the treadmill, and you'll write messages to the write characteristic when you want to communicate.
 
 # Protocol
@@ -42,45 +43,35 @@ The messages sent back and forth between the treadmill use a fairly straight for
  
 
 ## Messages
-| Name                                                                                                                               
-| Code   | Request                                | Response                 | ACK Type     | Direction         |
--
-|------------------------------------------------------------------------------------------------------------------------------------
-|--------|----------------------------------------|--------------------------|--------------|-------------------|
--
-| [Acknowledge](https://github.com/swedishborgie/treadonme/blob/04766d37a14b0fe02de2ea07d837dd8bc7e7d908/messages.go#L353-L392)     
- | `0x00` | N/A                                    | `5b0400094f4b5d`         | None         | Both              |
--
-| [Set Workout Mode](https://github.com/swedishborgie/treadonme/blob/04766d37a14b0fe02de2ea07d837dd8bc7e7d908/messages.go#L165-L193) 
-| `0x02` | `5B0202025D`                           | `5B0202025D`             | Echo         | Host -> Treadmill |
--
-| [Workout Mode](https://github.com/swedishborgie/treadonme/blob/04766d37a14b0fe02de2ea07d837dd8bc7e7d908/messages.go#L135-L163)     
-| `0x03` | `5B0203015D`                           | `5B0203015D`             | Echo         | Treadmill -> Host |
--
-| [Workout Target](https://github.com/swedishborgie/treadonme/blob/04766d37a14b0fe02de2ea07d837dd8bc7e7d908/messages.go#L394-L431)   
-| `0x04` | `5B05040A0000005D`                     | `5b0400044f4b5d`         | ACK          | Host -> Treadmill |
--
-| [Workout Data](https://github.com/swedishborgie/treadonme/blob/04766d37a14b0fe02de2ea07d837dd8bc7e7d908/messages.go#L226-L306)     
-| `0x06` | `5b0f06093b0000000000050000000000015d` | `5b0400064f4b5d`         | ACK          | Treadmill -> Host |
--
-| [User Profile](https://github.com/swedishborgie/treadonme/blob/04766d37a14b0fe02de2ea07d837dd8bc7e7d908/messages.go#L308-L351)     
-| `0x07` | `5B06070123009B435D`                   | `5b0400074f4b5d`         | ACK          | Host -> Treadmill |
--
-| [Program Type](https://github.com/swedishborgie/treadonme/blob/04766d37a14b0fe02de2ea07d837dd8bc7e7d908/messages.go#L918-L950)     
-| `0x08` | `5b030810015d`                         | `5b0400084f4b5d`         | ACK          | Host -> Treadmill |
--
-| [Heart Rate Type](https://github.com/swedishborgie/treadonme/blob/04766d37a14b0fe02de2ea07d837dd8bc7e7d908/messages.go#L195-L224)  
-| `0x09` | `5b030901005d`                         | `5b0400094f4b5d`         | ACK          | Treadmill -> Host |
--
-| [Error Code](https://github.com/swedishborgie/treadonme/blob/04766d37a14b0fe02de2ea07d837dd8bc7e7d908/messages.go#L463-L491)       
-| `0x10` | `5b0210005d`                           | `5b0400104f4b5d`         | ACK          | Treadmill -> Host |
--
-| [End Workout](https://github.com/swedishborgie/treadonme/blob/04766d37a14b0fe02de2ea07d837dd8bc7e7d908/messages.go#L793-L841)      
-| `0x32` | `5b0a320013000000000800005d`           | `5b0400324f4b5d`         | ACK          | Treadmill -> Host |
--
-| [Get Device Info](https://github.com/swedishborgie/treadonme/blob/04766d37a14b0fe02de2ea07d837dd8bc7e7d908/messages.go#L83-L133)   
-| `0xF0` | `5B01F05D`                             | `5B08F092000178050F125D` | Echo (Kinda) | Host -> Treadmill |
--
+```
+| Name              | URL   | Code   | Request                                | Response                 | ACK Type     | Direction         |
+|-------------------------|--------|----------------------------------------|--------------------------|--------------|-------------------|
+| [Acknowledge]     | [1]   | `0x00` | N/A                                    | `5b0400094f4b5d`         | None         | Both              |
+| [Set Workout Mode]| [2]   | `0x02` | `5B0202025D`                           | `5B0202025D`             | Echo         | Host -> Treadmill |
+| [Workout Mode]    | [3]   | `0x03` | `5B0203015D`                           | `5B0203015D`             | Echo         | Treadmill -> Host |
+| [Workout Target]  | [4]   | `0x04` | `5B05040A0000005D`                     | `5b0400044f4b5d`         | ACK          | Host -> Treadmill |
+| [Workout Data]    | [5]   | `0x06` | `5b0f06093b0000000000050000000000015d` | `5b0400064f4b5d`         | ACK          | Treadmill -> Host |
+| [User Profile]    | [6]   | `0x07` | `5B06070123009B435D`                   | `5b0400074f4b5d`         | ACK          | Host -> Treadmill |
+| [Program Type]    | [7]   | `0x08` | `5b030810015d`                         | `5b0400084f4b5d`         | ACK          | Host -> Treadmill |
+| [Heart Rate Type] | [8]   | `0x09` | `5b030901005d`                         | `5b0400094f4b5d`         | ACK          | Treadmill -> Host |
+| [Error Code]      | [9]   | `0x10` | `5b0210005d`                           | `5b0400104f4b5d`         | ACK          | Treadmill -> Host |
+| [End Workout]     | [10]  | `0x32` | `5b0a320013000000000800005d`           | `5b0400324f4b5d`         | ACK          | Treadmill -> Host |
+| [Get Device Info] | [11]  | `0xF0` | `5B01F05D`                             | `5B08F092000178050F125D` | Echo (Kinda) | Host -> Treadmill |
+
+URL
+[1] https://github.com/swedishborgie/treadonme/blob/04766d37a14b0fe02de2ea07d837dd8bc7e7d908/messages.go#L353-L392)     
+[2] https://github.com/swedishborgie/treadonme/blob/04766d37a14b0fe02de2ea07d837dd8bc7e7d908/messages.go#L165-L193)
+[3] https://github.com/swedishborgie/treadonme/blob/04766d37a14b0fe02de2ea07d837dd8bc7e7d908/messages.go#L135-L163)    
+[4] https://github.com/swedishborgie/treadonme/blob/04766d37a14b0fe02de2ea07d837dd8bc7e7d908/messages.go#L394-L431)  
+[5] https://github.com/swedishborgie/treadonme/blob/04766d37a14b0fe02de2ea07d837dd8bc7e7d908/messages.go#L226-L306)    
+[6] https://github.com/swedishborgie/treadonme/blob/04766d37a14b0fe02de2ea07d837dd8bc7e7d908/messages.go#L308-L351)    
+[7] https://github.com/swedishborgie/treadonme/blob/04766d37a14b0fe02de2ea07d837dd8bc7e7d908/messages.go#L918-L950)    
+[8] https://github.com/swedishborgie/treadonme/blob/04766d37a14b0fe02de2ea07d837dd8bc7e7d908/messages.go#L195-L224) 
+[9] https://github.com/swedishborgie/treadonme/blob/04766d37a14b0fe02de2ea07d837dd8bc7e7d908/messages.go#L463-L491)      
+[10] https://github.com/swedishborgie/treadonme/blob/04766d37a14b0fe02de2ea07d837dd8bc7e7d908/messages.go#L793-L841)     
+[11] https://github.com/swedishborgie/treadonme/blob/04766d37a14b0fe02de2ea07d837dd8bc7e7d908/messages.go#L83-L133)  
+```
+
 
 Notes:
 * Speeds are specified in the units returned in the 
@@ -108,13 +99,14 @@ This this provide the relevant data during a workout
 As noted above, the data is blocked by unacknowledge/wronglyacknowledged UART notifiations.
 
 ** Service and Characterstic
+```
 | ------------------- |------|------|
 | Description         | INT  | TYPE |
 | ------------------- |------| ---- |
 | FMTS_SERVICE        | 1826 | S    |
 | TREADMILL_DATA_CHAR | 2ACD | N    |
 | ------------------- |------|----- |
-
+```
 To get the data, we need to setup notifications on the TREADMILL_DATA_CHAR.
 
 The data we received looks something like this:
